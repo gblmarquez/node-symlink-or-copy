@@ -36,7 +36,6 @@ function testCanSymLink() {
   return true;
 }
 
-
 module.exports = symlinkOrCopy
 
 function symlinkOrCopy() {
@@ -78,7 +77,7 @@ function symlinkOrCopySync(srcPath, destPath) {
         stat = options.fs.statSync(realPath);
       }
 
-      type = stat.isDirectory() ? 'junction' : 'file';
+      type = stat.isDirectory() ? 'dir' : 'file';
       srcPath = realPath;
     } else if (srcPath[0] !== '/') {
       // Resolve relative paths.
