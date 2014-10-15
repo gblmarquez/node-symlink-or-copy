@@ -8,7 +8,7 @@ describe('node-symlink-or-copy', function() {
     symLinkOrCopy.disableTestMode();
   });
 
-	it('windows falls back to copy', function() {
+  it('windows falls back to copy', function() {
     var count = 0;
   	symLinkOrCopy.setTestOptions({
       copyDereferenceSync: function() {
@@ -30,6 +30,18 @@ describe('node-symlink-or-copy', function() {
             isSymbolicLink: function() {
               count++;
               return true;
+            },
+            isDirectory: function() {
+              count++;
+              return true;
+            }
+          }
+        },
+        statSync: function() {
+          return {
+            isDirectory: function() {
+              count++;
+              return true;
             }
           }
         },
@@ -40,33 +52,81 @@ describe('node-symlink-or-copy', function() {
     });
     symLinkOrCopy.enableTestMode();
     symLinkOrCopy.sync();
-    assert.equal(count, 3);
-  })
+    assert.equal(count, 4);
+  });
+  
+  
+  it('windows symlinks must check if it\'s directory of file', function() {
+    var count = 0;
+    symLinkOrCopy.setTestOptions({
+      fs: {
+        lstatSync: function() {
+          return {
+            isSymbolicLink: function() {
+              count++;
+              return true;
+            },
+            isDirectory: function() {
+              count++;
+              return true;
+            }
+          }
+        },
+        statSync: function() {
+          return {
+            isDirectory: function() {
+              count++;
+              return true;
+            }
+          }
+        },
+        realpathSync: function() {count++},
+        symlinkSync: function() {count++;}
+      },
+      canSymLink: true
+    });
+    symLinkOrCopy.enableTestMode();
+    symLinkOrCopy.sync();
+    assert.equal(count, 4);
+  });
+  
 });
 
 describe('testing mode', function() {
     
-    it('allows fs to be mocked', function() {
-      var count = 0;
-      symLinkOrCopy.setTestOptions({
-        canSymLink: true,
-        fs: {
-          lstatSync: function() {
-            return {
-              isSymbolicLink: function() {
-                count++;
-                return true;
-              }
+  it('allows fs to be mocked', function() {
+    var count = 0;
+    symLinkOrCopy.setTestOptions({
+      canSymLink: true,
+      fs: {
+        lstatSync: function() {
+          return {
+            isSymbolicLink: function() {
+              count++;
+              return true;
+            },            
+            isDirectory: function() {
+              count++;
+              return true;
             }
-          },
-          realpathSync: function() {count++},
-          symlinkSync: function() {count++;}
-        }
-      });
-      symLinkOrCopy.enableTestMode();
-
-      assert.equal(count, 0);
-      symLinkOrCopy.sync();
-      assert.equal(count, 3);
+          }
+        },
+        statSync: function() {
+          return {
+            isDirectory: function() {
+              count++;
+              return true;
+            }
+          }
+        },
+        realpathSync: function() {count++},
+        symlinkSync: function() {count++;}
+      }
     });
+    symLinkOrCopy.enableTestMode();
+
+    assert.equal(count, 0);
+    symLinkOrCopy.sync();
+    assert.equal(count, 4);
   });
+});

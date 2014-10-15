@@ -60,7 +60,7 @@ function symlinkOrCopySync (srcPath, destPath) {
   if (!options.canSymLink) {
     options.copyDereferenceSync(srcPath, destPath)
   } else {
-    var mode = 'file'; // as it's default on the fs lib.
+    var type = null; 
     var stat = options.fs.lstatSync(srcPath);
     if (stat.isSymbolicLink() || isWindows) {
       // We always want to use realPathSync() on windows since process.cwd() can
@@ -73,11 +73,14 @@ function symlinkOrCopySync (srcPath, destPath) {
       // https://github.com/joyent/node/issues/7902
       // Can someone please send a patch to Node? :)
       
-      // set the mode to 'dir' for Windows proposes
-      if (stat.isDirectory()) {
-        mode = 'dir';
+      var realPath = options.fs.realpathSync(srcPath);
+      
+      if (realPath !== srcPath) {  // only extra stat if the path has changed
+        stat = options.fs.statSync(realPath);
       }
-      srcPath = options.fs.realpathSync(srcPath)
+      
+      type = stat.isDirectory() ? 'dir' : 'file';        
+      srcPath = realPath;
     } else if (srcPath[0] !== '/') {
       // Resolve relative paths.
       // Note: On Mac and Linux (unlike Windows), process.cwd() never contains
@@ -89,7 +92,8 @@ function symlinkOrCopySync (srcPath, destPath) {
       srcPath = process.cwd() + '/' + srcPath
     }
     
-    // mode argument is only available on Windows and will be ignored on other platforms
-    options.fs.symlinkSync(srcPath, destPath, mode)
+    // The 'type' argument is only available on Windows and will be ignored 
+    // on other platforms. Default value is 'null'.
+    options.fs.symlinkSync(srcPath, destPath, type)
   }
 }
