@@ -5,25 +5,26 @@ var symLinkOrCopy = require('..')
 
 describe('node-symlink-or-copy', function() {
   beforeEach(function() {
-    symLinkOrCopy.disableTestMode();
+    // disable test mode, by setting the default 
+    symLinkOrCopy.setOptions(null);    
   });
 
   it('windows falls back to copy', function() {
     var count = 0;
-  	symLinkOrCopy.setTestOptions({
+  	symLinkOrCopy.setOptions({
       copyDereferenceSync: function() {
         count++;
       },
       canSymLink: false
     });
-    symLinkOrCopy.enableTestMode();
+    
     symLinkOrCopy.sync();
     assert.equal(count, 1);
   });
 
   it('windows symlinks when has permission', function() {
     var count = 0;
-    symLinkOrCopy.setTestOptions({
+    symLinkOrCopy.setOptions({
       fs: {
         lstatSync: function() {
           return {
@@ -50,7 +51,6 @@ describe('node-symlink-or-copy', function() {
       },
       canSymLink: true
     });
-    symLinkOrCopy.enableTestMode();
     symLinkOrCopy.sync();
     assert.equal(count, 4);
   });
@@ -58,7 +58,7 @@ describe('node-symlink-or-copy', function() {
   
   it('windows symlinks must check if it\'s directory of file', function() {
     var count = 0;
-    symLinkOrCopy.setTestOptions({
+    symLinkOrCopy.setOptions({
       fs: {
         lstatSync: function() {
           return {
@@ -85,7 +85,7 @@ describe('node-symlink-or-copy', function() {
       },
       canSymLink: true
     });
-    symLinkOrCopy.enableTestMode();
+    
     symLinkOrCopy.sync();
     assert.equal(count, 4);
   });
@@ -96,7 +96,7 @@ describe('testing mode', function() {
     
   it('allows fs to be mocked', function() {
     var count = 0;
-    symLinkOrCopy.setTestOptions({
+    symLinkOrCopy.setOptions({
       canSymLink: true,
       fs: {
         lstatSync: function() {
@@ -123,7 +123,6 @@ describe('testing mode', function() {
         symlinkSync: function() {count++;}
       }
     });
-    symLinkOrCopy.enableTestMode();
 
     assert.equal(count, 0);
     symLinkOrCopy.sync();

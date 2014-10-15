@@ -2,13 +2,15 @@ var fs = require('fs');
 var path = require('path');
 var copyDereferenceSync = require('copy-dereference').sync
 
+// global variables
 var isWindows = process.platform === 'win32';
-
-var defaultOptions, testOptions, options = {
+var options = {
   copyDereferenceSync: copyDereferenceSync,
   canSymLink: testCanSymLink(),
   fs: fs
 };
+
+var defaultOptions, testOptions;
 
 function testCanSymLink() {
   var canLinkSrc = path.join(__dirname, "canLinkSrc.tmp");
@@ -41,22 +43,14 @@ function symlinkOrCopy() {
   throw new Error("This function does not exist. Use require('symlink-or-copy').sync")
 }
 
-module.exports.enableTestMode = enableTestMode
+module.exports.setOptions = setOptions
 
-function enableTestMode() {
-  options = testOptions;
-}
-
-module.exports.disableTestMode = disableTestMode
-
-function disableTestMode() {
-  options = defaultOptions;
-}
-
-module.exports.setTestOptions = setTestOptions
-
-function setTestOptions(newTestOptions) {
-  testOptions = newTestOptions;
+function setOptions(newOptions) {
+  if (newOptions == null) {
+    options = defaultOptions;    
+  } else {
+    options = newOptions;
+  }
 }
 
 module.exports.sync = symlinkOrCopySync
