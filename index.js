@@ -10,15 +10,14 @@ var defaultOptions, testOptions, options = {
   fs: fs
 };
 
-var spawn    = require('child_process').spawn;
-
-function testCanSymLink () {
-  var canLinkSrc  = path.join(__dirname, "canLinkSrc.tmp");
+function testCanSymLink() {
+  var canLinkSrc = path.join(__dirname, "canLinkSrc.tmp");
   var canLinkDest = path.join(__dirname, "canLinkDest.tmp");
 
   try {
     fs.writeFileSync(canLinkSrc);
   } catch (e) {
+    fs.unlinkSync(canLinkSrc);
     return false;
   }
 
@@ -29,6 +28,7 @@ function testCanSymLink () {
     return false;
   }
 
+  fs.unlinkSync(canLinkSrc);
   fs.unlinkSync(canLinkDest);
 
   return true;
@@ -36,31 +36,36 @@ function testCanSymLink () {
 
 
 module.exports = symlinkOrCopy
-function symlinkOrCopy () {
+
+function symlinkOrCopy() {
   throw new Error("This function does not exist. Use require('symlink-or-copy').sync")
 }
 
 module.exports.enableTestMode = enableTestMode
+
 function enableTestMode() {
   options = testOptions;
 }
 
 module.exports.disableTestMode = disableTestMode
+
 function disableTestMode() {
   options = defaultOptions;
 }
 
 module.exports.setTestOptions = setTestOptions
+
 function setTestOptions(newTestOptions) {
   testOptions = newTestOptions;
 }
 
 module.exports.sync = symlinkOrCopySync
-function symlinkOrCopySync (srcPath, destPath) {
+
+function symlinkOrCopySync(srcPath, destPath) {
   if (!options.canSymLink) {
     options.copyDereferenceSync(srcPath, destPath)
   } else {
-    var type = null; 
+    var type = null;
     var stat = options.fs.lstatSync(srcPath);
     if (stat.isSymbolicLink() || isWindows) {
       // We always want to use realPathSync() on windows since process.cwd() can
@@ -72,14 +77,14 @@ function symlinkOrCopySync (srcPath, destPath) {
       // because it doesn't use the standard library's `realpath`:
       // https://github.com/joyent/node/issues/7902
       // Can someone please send a patch to Node? :)
-      
+
       var realPath = options.fs.realpathSync(srcPath);
-      
-      if (realPath !== srcPath) {  // only extra stat if the path has changed
+
+      if (realPath !== srcPath) { // only extra stat if the path has changed
         stat = options.fs.statSync(realPath);
       }
-      
-      type = stat.isDirectory() ? 'dir' : 'file';        
+
+      type = stat.isDirectory() ? 'junction' : 'file';
       srcPath = realPath;
     } else if (srcPath[0] !== '/') {
       // Resolve relative paths.
@@ -91,7 +96,7 @@ function symlinkOrCopySync (srcPath, destPath) {
       // patch to Node?)
       srcPath = process.cwd() + '/' + srcPath
     }
-    
+
     // The 'type' argument is only available on Windows and will be ignored 
     // on other platforms. Default value is 'null'.
     options.fs.symlinkSync(srcPath, destPath, type)
