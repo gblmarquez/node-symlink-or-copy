@@ -1,6 +1,6 @@
 var fs = require('fs');
 var path = require('path');
-var copyDereferenceSync = require('copy-dereference').sync
+var copyDereferenceSync = require('copy-dereference').sync;
 
 // global variables
 var isWindows = process.platform === 'win32';
@@ -36,27 +36,27 @@ function testCanSymLink() {
   return true;
 }
 
-module.exports = symlinkOrCopy
+module.exports = symlinkOrCopy;
 
 function symlinkOrCopy() {
-  throw new Error("This function does not exist. Use require('symlink-or-copy').sync")
+  throw new Error("This function does not exist. Use require('symlink-or-copy').sync");
 }
 
-module.exports.setOptions = setOptions
+module.exports.setOptions = setOptions;
 
 function setOptions(newOptions) {
-  if (newOptions == null) {
+  if (newOptions === undefined) {
     options = defaultOptions;    
   } else {
     options = newOptions;
   }
 }
 
-module.exports.sync = symlinkOrCopySync
+module.exports.sync = symlinkOrCopySync;
 
 function symlinkOrCopySync(srcPath, destPath) {
   if (!options.canSymLink) {
-    options.copyDereferenceSync(srcPath, destPath)
+    options.copyDereferenceSync(srcPath, destPath);
   } else {
     var type = null;
     var stat = options.fs.lstatSync(srcPath);
@@ -79,7 +79,7 @@ function symlinkOrCopySync(srcPath, destPath) {
 
       type = stat.isDirectory() ? 'dir' : 'file';
       srcPath = realPath;
-    } else if (srcPath[0] !== '/') {
+    } else if (srcPath[0] !== path.sep) {
       // Resolve relative paths.
       // Note: On Mac and Linux (unlike Windows), process.cwd() never contains
       // symlink components, due to the way getcwd is implemented. As a
@@ -87,11 +87,11 @@ function symlinkOrCopySync(srcPath, destPath) {
       // path instead of the slower path.resolve(). (It seems unnecessary in
       // principle that path.resolve() is slower. Does anybody want to send a
       // patch to Node?)
-      srcPath = process.cwd() + '/' + srcPath
+      srcPath = process.cwd() + path.sep + srcPath;
     }
 
     // The 'type' argument is only available on Windows and will be ignored 
     // on other platforms. Default value is 'null'.
-    options.fs.symlinkSync(srcPath, destPath, type)
+    options.fs.symlinkSync(srcPath, destPath, type);
   }
 }
