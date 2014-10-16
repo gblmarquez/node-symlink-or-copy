@@ -7,14 +7,15 @@ var isWindows = process.platform === 'win32';
 var options = {
   copyDereferenceSync: copyDereferenceSync,
   canSymLink: testCanSymLink(),
+  canLink: testCanLink(),
   fs: fs
 };
 
 var defaultOptions, testOptions;
 
 function testCanSymLink() {
-  var canLinkSrc = path.join(__dirname, "canLinkSrc.tmp");
-  var canLinkDest = path.join(__dirname, "canLinkDest.tmp");
+  var canLinkSrc = path.join(__dirname, "canSymLinkSrc.tmp");
+  var canLinkDest = path.join(__dirname, "canSymLinkDest.tmp");
 
   try {
     fs.writeFileSync(canLinkSrc);
@@ -33,6 +34,29 @@ function testCanSymLink() {
   fs.unlinkSync(canLinkSrc);
   fs.unlinkSync(canLinkDest);
 
+  return true;
+}
+
+function testCanLink() {
+  var canLinkSrc  = path.join(__dirname, "canLinkSrc.tmp");
+  var canLinkDest = path.join(__dirname, "canLinkDest.tmp");
+
+  try {
+    fs.writeFileSync(canLinkSrc);
+  } catch (e) {
+    return false;
+  }
+
+  try {
+    fs.linkSync(canLinkSrc, canLinkDest);
+  } catch (e) {
+    fs.unlinkSync(canLinkSrc);
+    return false;
+  }
+
+  fs.unlinkSync(canLinkSrc);
+  fs.unlinkSync(canLinkDest);
+    
   return true;
 }
 
@@ -55,7 +79,7 @@ function setOptions(newOptions) {
 module.exports.sync = symlinkOrCopySync;
 
 function symlinkOrCopySync(srcPath, destPath) {
-  if (!options.canSymLink) {
+  if (!options.canSymLink && !options.canLink) {
     options.copyDereferenceSync(srcPath, destPath);
   } else {
     var type = null;
@@ -89,9 +113,19 @@ function symlinkOrCopySync(srcPath, destPath) {
       // patch to Node?)
       srcPath = process.cwd() + path.sep + srcPath;
     }
-
-    // The 'type' argument is only available on Windows and will be ignored 
-    // on other platforms. Default value is 'null'.
-    options.fs.symlinkSync(srcPath, destPath, type);
+    
+    // we should process the same file?
+    if (destPath === srcPath) {
+      return;
+    }
+    
+    if (options.canSymLink && type === 'dir') {
+      // The 'type' argument is only available on Windows and will be ignored
+      // on other platforms. Default value is 'null'.
+      options.fs.symlinkSync(srcPath, destPath, type);
+    } else if (options.canLink && type === 'file') {      
+      //options.fs.linkSync(srcPath, destPath);
+      options.copyDereferenceSync(srcPath, destPath)
+    }
   }
 }
