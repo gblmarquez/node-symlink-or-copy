@@ -15,7 +15,9 @@ describe('node-symlink-or-copy', function() {
       copyDereferenceSync: function() {
         count++;
       },
-      canSymLink: false
+      isTest: true,
+      canSymLink: false,
+      canLink: false
     });
     
     symLinkOrCopy.sync();
@@ -36,7 +38,7 @@ describe('node-symlink-or-copy', function() {
               count++;
               return true;
             }
-          }
+          };
         },
         statSync: function() {
           return {
@@ -44,12 +46,15 @@ describe('node-symlink-or-copy', function() {
               count++;
               return true;
             }
-          }
+          };
         },
-        realpathSync: function() {count++},
-        symlinkSync: function() {count++;}
+        realpathSync: function() {count++;},
+        symlinkSync: function() {count++;},
+        linkSync: function() {count++;}
       },
-      canSymLink: true
+      isTest: true,
+      canSymLink: true,
+      canLink: true
     });
     symLinkOrCopy.sync();
     assert.equal(count, 4);
@@ -70,7 +75,7 @@ describe('node-symlink-or-copy', function() {
               count++;
               return true;
             }
-          }
+          };
         },
         statSync: function() {
           return {
@@ -78,16 +83,137 @@ describe('node-symlink-or-copy', function() {
               count++;
               return true;
             }
-          }
+          };
         },
         realpathSync: function() {count++},
-        symlinkSync: function() {count++;}
+        symlinkSync: function() {count++;},
+        linkSync: function() {count++;}
       },
-      canSymLink: true
+      isTest: true,
+      canSymLink: true,
+      canLink: true
     });
     
     symLinkOrCopy.sync();
     assert.equal(count, 4);
+  });
+  
+  it('windows should use symlinks for directory', function() {
+    var count = 0,
+        countDir = 0;
+    symLinkOrCopy.setOptions({
+      fs: {
+        lstatSync: function() {
+          return {
+            isSymbolicLink: function() {
+              count++;
+              return true;
+            },
+            isDirectory: function() {
+              count++;
+              return true;
+            }
+          };
+        },
+        statSync: function() {
+          return {
+            isDirectory: function() {
+              count++;
+              return true;
+            }
+          };
+        },
+        realpathSync: function() {count++;},
+        symlinkSync: function() {countDir++;},
+        linkSync: function() {count++;}
+      },
+      isTest: true,
+      canSymLink: true,
+      canLink: true
+    });
+    
+    symLinkOrCopy.sync();
+    assert.equal(count, 3);
+    assert.equal(countDir, 1);
+  });
+  
+  it('windows should use hardlinks for files', function() {
+    var count = 0,
+        countFile = 0;
+    symLinkOrCopy.setOptions({
+      fs: {
+        lstatSync: function() {
+          return {
+            isSymbolicLink: function() {
+              count++;
+              return true;
+            },
+            isDirectory: function() {
+              count++;
+              return false;
+            }
+          };
+        },
+        statSync: function() {
+          return {
+            isDirectory: function() {
+              count++;
+              return false;
+            }
+          };
+        },
+        realpathSync: function() {count++;},
+        symlinkSync: function() {count++;},
+        linkSync: function() {countFile++;}
+      },
+      isTest: true,
+      canSymLink: true,
+      canLink: true
+    });
+    
+    symLinkOrCopy.sync();
+    assert.equal(count, 3);
+    assert.equal(countFile, 1);
+  });  
+  
+  it('windows should use copy files when hardlinks are not available', function() {
+    var count = 0,
+        countCopy = 0;
+    symLinkOrCopy.setOptions({
+      copyDereferenceSync: function() {countCopy++;},
+      fs: {
+        lstatSync: function() {
+          return {
+            isSymbolicLink: function() {
+              count++;
+              return true;
+            },
+            isDirectory: function() {
+              count++;
+              return false;
+            }
+          };
+        },
+        statSync: function() {
+          return {
+            isDirectory: function() {
+              count++;
+              return false;
+            }
+          };
+        },
+        realpathSync: function() {count++;},
+        symlinkSync: function() {count++;},
+        linkSync: function() {count++;}
+      },
+      isTest: true,
+      canSymLink: true,
+      canLink: false
+    });
+    
+    symLinkOrCopy.sync();
+    assert.equal(count, 3);
+    assert.equal(countCopy, 1);
   });
   
 });
@@ -97,6 +223,7 @@ describe('testing mode', function() {
   it('allows fs to be mocked', function() {
     var count = 0;
     symLinkOrCopy.setOptions({
+      isTest: true,
       canSymLink: true,
       fs: {
         lstatSync: function() {
@@ -109,7 +236,7 @@ describe('testing mode', function() {
               count++;
               return true;
             }
-          }
+          };
         },
         statSync: function() {
           return {
@@ -117,7 +244,7 @@ describe('testing mode', function() {
               count++;
               return true;
             }
-          }
+          };
         },
         realpathSync: function() {count++},
         symlinkSync: function() {count++;}

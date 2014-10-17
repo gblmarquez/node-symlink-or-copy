@@ -115,17 +115,18 @@ function symlinkOrCopySync(srcPath, destPath) {
     }
     
     // we should process the same file?
-    if (destPath === srcPath) {
+    if (destPath === srcPath && !options.isTest) {
       return;
     }
     
-    if (options.canSymLink && type === 'dir') {
+    if (options.canSymLink && type === 'dir') { // if we can't hardlink use symlink
       // The 'type' argument is only available on Windows and will be ignored
       // on other platforms. Default value is 'null'.
       options.fs.symlinkSync(srcPath, destPath, type);
-    } else if (options.canLink && type === 'file') {      
-      //options.fs.linkSync(srcPath, destPath);
-      options.copyDereferenceSync(srcPath, destPath)
+    } else if (options.canLink && type === 'file') {
+      options.fs.linkSync(srcPath, destPath);
+    } else {
+      options.copyDereferenceSync(srcPath, destPath);
     }
   }
 }
