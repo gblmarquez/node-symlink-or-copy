@@ -101,7 +101,7 @@ function symlinkOrCopySync(srcPath, destPath) {
         stat = options.fs.statSync(realPath);
       }
 
-      type = stat.isDirectory() ? 'dir' : 'file';
+      type = stat.isDirectory() ? 'junction' : 'file';
       srcPath = realPath;
     } else if (srcPath[0] !== path.sep) {
       // Resolve relative paths.
@@ -119,7 +119,7 @@ function symlinkOrCopySync(srcPath, destPath) {
       return;
     }
     
-    if (options.canSymLink && type === 'dir') { // if we can't hardlink use symlink
+    if ((options.canSymLink && type === 'junction') || !options.canLink) { // if we can't hardlink use symlink
       // The 'type' argument is only available on Windows and will be ignored
       // on other platforms. Default value is 'null'.
       options.fs.symlinkSync(srcPath, destPath, type);
